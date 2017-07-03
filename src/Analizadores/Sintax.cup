@@ -1,0 +1,298 @@
+package Analizadores;
+import java_cup.runtime.*;
+
+parser code 
+{:
+
+   
+    /**
+     * Método al que se llama automáticamente ante algún error sintactico.
+     **/ 
+    public void syntax_error(Symbol s){ 
+            System.out.println("Error Sintáctico en la Línea " + (s.left) +" Columna "+s.right+ ". No se esperaba este componente: " +s.value+"."); 
+    } 
+    /**
+     * Método al que se llama en el momento en que ya no es posible una recuperación de errores.
+     **/ 
+    public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception{ 
+            System.out.println("Error síntactico irrecuperable en la Línea " + (s.left)+ " Columna "+s.right+". Componente " + s.value + " no reconocido."); 
+    }  
+
+
+:} 
+
+action code 
+{:     
+
+:} 
+
+
+terminal String principal, publico, privado, protegido, conservar, extiende, retorna;
+terminal String continuar, consola, circRec, pto, sino, si, comprobar, caso, defecto;
+terminal String salir, para, mientras, hacer, var , arreglo, lienzo, int_, double_, bool, char_, false_, true_, string_;
+terminal String igual, menIgual, mayIgual, distinto, men, may;
+terminal String nand, nor, xor, or, and, not;
+terminal String inc, decre, mas, menos, por, div, pot, mod;
+terminal String fin, ape, cie, parIzq, parDer, coma, suma, resta, corIzq, corDer, llaveIzq, llaveDer , asigna;
+terminal String dosPtos, ptoComa, id, ent, dec, car, cadena, errar;
+
+
+
+
+non terminal Nodo S, Vis, Ext, C1, C2, Met, Decl, Asig, Cons, Tipo, PARAM, LPARAM, CM;
+non terminal Nodo Cond, Swi, DoW, Whi, Ret, Inv, LVAR , Asg, AsgArg ,Arglo,EXP, DIM ;
+non termianl Nodo REL, MultiArg , LOG, Caso , OpcSw, Def;
+
+
+precedence left mas, menos
+precedence left por, div
+precedence right umin
+precedence left pot 
+
+precedence left or, nor, xor
+precedence lef nand, and
+precedence right not
+
+
+
+
+start with S;   
+
+
+
+S ::= Vis:V lienzo id:I Ext:e ape C1:C cie
+      {:
+          RESULT = new Nodo("S");
+          if(V!=null){
+             RESULT.agregarHijo(V);
+          }
+          RESULT.agregarHijo(I);
+          RESULT.agregarHijo(e);
+          RESULT.agregarHijo(C);
+
+
+
+      :}
+     |Vis: V lienzo id:I   ape C1:C  cie
+      {:
+          RESULT = new Nodo("S");
+          if(V!=null){
+             RESULT.agregarHijo(V);
+          }
+          RESULT.agregarHijo(I);
+          
+          RESULT.agregarHijo(C);
+          
+
+
+      :}
+
+;
+
+Vis ::= publico 
+      | privado
+      | //this is epsilon production
+; 
+
+Ext ::= Ext coma id
+       | id
+
+;
+
+
+C1  ::= C1 C2
+       |C2
+;
+
+C2  ::= Met 
+      | Decl
+      | Asig
+      | Arglo
+      | Simp
+      | Cont
+;
+
+Met ::= Cons Tipo id  PARAM ape MetB  cie
+       |Cons id  PARAM ape MetB cie
+;
+
+Cons ::= conservar 
+        | //vacio
+
+;
+
+
+PARAM ::= parIzq LPARAM parDer
+        | parIzq  parDer
+;
+
+LPARAM ::= LPARAM coma Tipo id
+          | Tipo id
+;
+
+Tipo ::= int_ | double_ | bool | char_ | string_ 
+;
+
+MetB ::= MetB CM
+        |CM
+;
+
+
+CM ::=  Decl
+      | Arglo
+      | Asig
+      | Cond
+      | Swi
+      | DoW
+      | Whi
+      | Ret
+      | Inv
+      | Salir
+      | Continuar
+      | Simp
+      | Cont
+;
+
+
+Cont ::= Data Kin
+;
+
+Kin ::= dec
+       |inc
+;
+
+Data ::=  ent
+        | dec
+        | car
+        | id
+;
+
+Simp ::= id Ope EXP fin
+        |id DIM Ope EXP fin
+
+;
+
+Ope ::=  suma
+        |resta
+;
+
+Salir ::= salir fin
+;
+
+Continuar ::= continuar fin
+;
+
+Decl ::=  Cons var Tipo LVAR  Asg fin 
+        | Cons var Tipo LVAR fin
+;
+
+Arglo::=  Cons var Tipo arreglo LVAR  DIM AsgArg fin 
+        | Cons var Tipo arreglo LVAR  DIM fin
+
+;
+
+
+LVAR ::= LVAR coma id
+        | id
+;
+
+DIM  ::= DIM corIzq EXP corDer
+        | corIzq EXP corDer
+
+;
+
+AsgArg ::= igual llaveIzq  MultiArg llaveDer
+;
+
+MultiArg ::= MultiArg coma llaveIzq MultiArg llaveDer
+            | llaveIzq MultiArg llaveDer
+            | LEXP
+
+;
+
+
+LEXP  ::= LEXP coma EXP 
+         |EXP 
+;
+
+Asg ::= igual EXP
+;   
+
+Asig ::= id  DIM Asg fin 
+        |id Asg fin 
+;
+
+
+Cond ::= si parIzq LOG parDer  ape MetB cie Alt
+        |si parIzq LOG parDer  ape  cie Alt
+;
+
+
+Alt ::= sino ape MetB cie
+       |sino ape  cie
+       | //vacio
+;
+
+
+Swi  ::= comprobar parDer id parIzq ape  Caso Def cie
+
+;
+
+Caso ::= Caso caso EXP dosPtos MetB
+        | caso EXP dosPtos MetB
+;
+
+
+
+Def ::= defecto dosPtos MetB
+        |
+;
+
+DoW ::= hacer ape MetB cie mientras parIzq LOG parDer
+;
+
+
+
+Whi ::= mientras parIzq LOG parDer ape MetB cie
+;
+
+Foo ::= para parIzq Asig ptoComa 
+
+
+EXP ::= EXP mas EXP
+       |EXP menos EXP
+       |EXP por EXP
+       |EXP pot EXP
+       |EXP div EXP
+       |menos EXP % prec umin
+       | parIzq EXP parDer
+       | ent
+       | dec
+       | car
+       | cadena
+       | true_
+       | false_ 
+       | id
+       | Cont
+
+;
+
+
+LOG ::= REL or REL
+       |REL and REL
+       |REL nand REL
+       |REL nor REL
+       |REL xor REL
+       |parIzq REL parDer
+       |not REL
+       |REL
+;       
+
+REL ::= EXP igual EXP
+       |EXP distinto EXP
+       |EXP may EXP
+       |EXP menor EXP
+       |EXP mayIgual EXP
+       |EXP menIgual EXP
+       |EXP
+;
